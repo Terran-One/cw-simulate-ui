@@ -27,10 +27,15 @@ interface JSONSchemaFormProps {
   schema: any;
 }
 
+// Replace all "uint64" with "integer" in the JSON schema
+function replaceUint64WithInteger(schema: any) {
+  return JSON.parse(JSON.stringify(schema).replace(/uint64/g, "integer"));
+}
+
 const JSONSchemaForm = ({schema}: JSONSchemaFormProps) => {
   return (
     <>
-      <Form schema={schema}
+      <Form schema={replaceUint64WithInteger(schema)}
             validator={validator}
             onChange={() => console.log("changed")}/>
     </>
