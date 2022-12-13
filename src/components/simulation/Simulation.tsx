@@ -40,7 +40,8 @@ const Simulation = () => {
   const contractAddress = useParams().instanceAddress!;
   const sim = useSimulation();
   const schema = sim.getSchema(contractAddress);
-  console.log(schema);
+  // @ts-ignore
+  const executeSchema = schema?.schema.execute;
 
   return (
     <SplitView className="T1Simulation-root">
@@ -56,7 +57,7 @@ const Simulation = () => {
             />
             {Object.keys(schema?.schema as any).length === 0 ?
               <Executor contractAddress={contractAddress}/> :
-              <JSONSchemaForm schema={schema?.schema}/>}
+              <JSONSchemaForm schema={executeSchema}/>}
           </Grid>
           <Divider sx={{my: 1}}/>
           <Grid item flex={1} sx={{display: "relative"}}>
