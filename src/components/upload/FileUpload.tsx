@@ -13,7 +13,7 @@ interface IProps {
   variant?: 'simulation' | 'contract' | 'both' | undefined;
 
   /** Callback which receives the uploaded file's name + contents buffer. */
-  onAccept(filename: string, fileContent: Buffer | JSON): void;
+  onAccept(filename: string, schema: JSON, fileContent: Buffer | JSON): void;
 
   /** Callback for when user removes uploaded file. */
   onClear(): void;
@@ -76,7 +76,7 @@ const FileUpload = ({
         try {
           const buffer = Buffer.from(extractByteCode(contents));
           setFilename(file.name);
-          onAccept(file.name, buffer);
+          onAccept(file.name, {} as JSON, buffer);
         } catch (ex: any) {
           setNotification(`Failed to extract & store WASM bytecode: ${ex.message ?? ex}`, {severity: "error"});
           console.error(ex);
@@ -102,7 +102,7 @@ const FileUpload = ({
         // }
 
         setFilename(file.name);
-        onAccept(file.name, json);
+        onAccept(file.name, {} as JSON, json);
       };
 
       reader.onerror = () => {

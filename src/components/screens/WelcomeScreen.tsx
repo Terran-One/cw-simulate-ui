@@ -115,6 +115,7 @@ const SAMPLE_CONTRACTS: ISampleContract[] = [
 
 interface SimulationFileType {
   filename: string;
+  schema: JSON;
   fileContent: Buffer | JSON;
 }
 
@@ -124,10 +125,14 @@ const getSampleContractsForChain = (chain: string) => {
   );
 };
 
+const getJsonFileName = (filename: string) => {
+  return filename.replace(".wasm", ".json");
+};
+
 export default function WelcomeScreen() {
   const sim = useSimulation();
   const setLastChainId = useSetAtom(lastChainIdState);
-  
+
   const [files, setFiles] = useState<SimulationFileType[]>([]);
   const setNotification = useNotification();
   const navigate = useNavigate();
@@ -150,9 +155,14 @@ export default function WelcomeScreen() {
         const response = await axios.get(`/r2/${contract.id}/${key}`, {
           responseType: "arraybuffer",
         });
+        const schema = await axios.get(
+          `/r2/${contract.id}/${getJsonFileName(key)}`
+        );
         const wasmFile = Buffer.from(extractByteCode(response.data));
+        console.log(schema.data);
         const newFile = {
           filename: key,
+          schema: schema.data,
           fileContent: wasmFile,
         };
         wasmFiles.push(newFile);
@@ -185,18 +195,22 @@ export default function WelcomeScreen() {
           chainConfig.sender,
           file.filename,
           file.fileContent as Buffer,
+          file.schema,
           chainConfig.funds
         );
       }
     } else if (files[0].filename.endsWith(".json")) {
-      setNotification('Feature coming soon', { severity: 'error' });
-      throw new Error('not yet implemented');
+      setNotification("Feature coming soon", { severity: "error" });
+      throw new Error("not yet implemented");
     }
   }, [sim, files, chain]);
 
   const onAcceptFile = useCallback(
-    async (filename: string, fileContent: Buffer | JSON) => {
-      setFiles((prevFiles) => [...prevFiles, { filename, fileContent }]);
+    async (filename: string, schema: JSON, fileContent: Buffer | JSON) => {
+      setFiles((prevFiles) => [
+        ...prevFiles,
+        { filename, schema, fileContent },
+      ]);
     },
     []
   );

@@ -41,6 +41,7 @@ export type CodeInfoEx = CodeInfo & {
 
 export type ContractInfoEx = ContractInfo & {
   trace?: TraceLog[];
+  schema?: JSON;
   hidden?: boolean;
 }
 
@@ -91,12 +92,18 @@ export default class CWSimulationBridge {
   }
 
   /** Store a new smart contract code in the simulation & re-sync bridge. */
-  storeCode(sender: string, name: string, content: Buffer, funds: Coin[] = []) {
+  storeCode(sender: string, name: string, content: Buffer, schema: JSON, funds: Coin[] = []) {
     const codeId = this.app.wasm.create(sender, content);
 
     // inject contract name for convenient lookup.
     this.codes.tx(setter => {
       setter(codeId, 'name')(name);
+      return Ok(undefined);
+    });
+
+    // Store schema for contract
+    this.contracts.tx(setter => {
+      setter(name, 'schema')(schema);
       return Ok(undefined);
     });
 
@@ -151,7 +158,7 @@ export default class CWSimulationBridge {
   async execute(sender: string, contractAddress: string, msg: any, funds: Coin[] = []) {
     const info = this.getContract(contractAddress);
     if (!info) throw new Error(`No such contract with address ${contractAddress}`);
-    
+
     const trace = info.trace ?? [];
     const result = await this.app.wasm.executeContract(sender, funds, contractAddress, msg, trace);
     this.contracts.tx(setter => {
@@ -199,26 +206,26 @@ export default class CWSimulationBridge {
     debug?: string,
   ) {
     const params = { filter, compare, commit, debug };
-    
+
     // eslint not smart enough to tell we're not actually in a class component
     /* eslint-disable react-hooks/rules-of-hooks */
     const [state, dispatch] = useBridgeReducer<T>(this.app, params);
-    
+
     // re-register watcher when any callbacks or deps change
     useEffect(() => {
       const watcher = {
         state,
         dispatch,
       };
-      
+
       this.watchers.add(watcher);
       state.params = params;
-      
+
       return () => {
         this.watchers.delete(watcher);
       };
     }, [filter, compare, commit, debug, ...deps]);
-    
+
     // re-evaluate this watcher only when deps change
     // this prevents anonymous functions & arrow functions from continuously triggering updates
     useEffect(() => {
@@ -284,7 +291,7 @@ export default class CWSimulationBridge {
       },
       dispatch,
     } = inst;
-    
+
     const next = filter(this.app);
     if (!compare(last, next)) {
       debug && console.log(`[${debug}] update`);
@@ -442,12 +449,12 @@ function compareManyCodes(lhs: Record<number, CodeInfoEx>, rhs: Record<number, C
   const lkeys = new Set(Object.keys(lhs)) as any as Set<number>;
   const rkeys = new Set(Object.keys(rhs)) as any as Set<number>;
   if (lkeys.size !== rkeys.size) return false;
-  
+
   for (const lkey of lkeys)
     if (!rkeys.has(lkey)) return false;
   for (const rkey of rkeys)
     if (!lkeys.has(rkey)) return false;
-  
+
   for (const key of lkeys) {
     if (!compareCodes(lhs[key], rhs[key]))
       return false;
