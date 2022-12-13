@@ -42,12 +42,12 @@ export type FileUploadType = {
 
 export type CodeInfoEx = CodeInfo & {
   name?: string;
+  schema?: JSON;
   hidden?: boolean;
 }
 
 export type ContractInfoEx = ContractInfo & {
   trace?: TraceLog[];
-  schema?: JSON;
   hidden?: boolean;
 }
 
@@ -104,12 +104,7 @@ export default class CWSimulationBridge {
     // inject contract name for convenient lookup.
     this.codes.tx(setter => {
       setter(codeId, 'name')(fileUpload.name);
-      return Ok(undefined);
-    });
-
-    // Store schema for contract
-    this.contracts.tx(setter => {
-      setter(fileUpload.name, 'schema')(fileUpload.schema);
+      setter(codeId, 'schema')(fileUpload.schema);
       return Ok(undefined);
     });
 

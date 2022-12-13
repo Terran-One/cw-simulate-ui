@@ -14,6 +14,7 @@ import Executor from "./Executor";
 import { StateRenderer } from "./StateRenderer";
 import StateStepper from "./StateStepper";
 import Address from "../chains/Address";
+import useSimulation from "../../hooks/useSimulation";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   ...theme.typography.body2,
@@ -22,6 +23,12 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 
 const Simulation = () => {
   const contractAddress = useParams().instanceAddress!;
+  const sim = useSimulation();
+  const contract = sim.getContract(contractAddress);
+  if (contract) {
+    const code = sim.getCode(contract.codeId);
+    console.log(code);
+  }
 
   return (
     <SplitView className="T1Simulation-root">
