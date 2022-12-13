@@ -122,6 +122,18 @@ export default class CWSimulationBridge {
     return this;
   }
 
+  /**
+   * Get contract schema for a given contract address.
+   * @param address
+   */
+  getSchema(address: string) {
+    const contract = this.getContract(address);
+    if (!contract) return;
+    const code = this.getCode(contract.codeId);
+    if (!code) return;
+    return Object.assign({schema: code.schema}, { name: code.name });
+  }
+
   /** Get contract associated with given address, and augment contract info with same address for convenience. */
   getContract(address: string) {
     const contract = this.contracts.getObject(address);

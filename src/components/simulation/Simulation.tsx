@@ -24,11 +24,8 @@ const StyledPaper = styled(Paper)(({ theme }) => ({
 const Simulation = () => {
   const contractAddress = useParams().instanceAddress!;
   const sim = useSimulation();
-  const contract = sim.getContract(contractAddress);
-  if (contract) {
-    const code = sim.getCode(contract.codeId);
-    console.log(code);
-  }
+  const schema = sim.getSchema(contractAddress);
+  console.log(schema);
 
   return (
     <SplitView className="T1Simulation-root">
