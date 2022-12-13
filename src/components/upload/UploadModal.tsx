@@ -10,6 +10,7 @@ import { defaults } from "../../configs/constants";
 import useSimulation from "../../hooks/useSimulation";
 import FileUpload from "./FileUpload";
 import FileUploadPaper from "./FileUploadPaper";
+import { FileUploadType } from "../../CWSimulationBridge";
 
 interface IUploadModalProps {
   dropzoneText?: string;
@@ -31,7 +32,7 @@ export default function UploadModal(props: IUploadModalProps) {
   const sim = useSimulation();
   const navigate = useNavigate();
 
-  const [file, setFile] = useState<{ filename: string, schema: JSON, fileContent: Buffer | JSON } | undefined>();
+  const [file, setFile] = useState<FileUploadType | undefined>();
   const setNotification = useNotification();
 
   const handleAdd = useCallback(async () => {
@@ -49,7 +50,7 @@ export default function UploadModal(props: IUploadModalProps) {
         return;
       }
 
-      sim.storeCode(sender, file.filename, file.fileContent as Buffer, file.schema);
+      sim.storeCode(sender, file);
     }
     else if (variant === 'simulation') {
       try {
@@ -73,8 +74,8 @@ export default function UploadModal(props: IUploadModalProps) {
           <FileUpload
             dropzoneText={dropzoneText ?? "Upload or drop a .wasm contract binary here"}
             variant={variant ?? 'contract'}
-            onAccept={(filename: string, schema: JSON, fileContent: Buffer | JSON) => {
-              setFile({filename, schema, fileContent});
+            onAccept={(name: string, schema: JSON, content: Buffer | JSON) => {
+              setFile({name, schema, content});
             }}
             onClear={() => {
               setFile(undefined);

@@ -34,6 +34,12 @@ export type AccountEx = {
   label?: string;
 }
 
+export type FileUploadType = {
+  name: string;
+  schema: JSON;
+  content: Buffer | JSON;
+}
+
 export type CodeInfoEx = CodeInfo & {
   name?: string;
   hidden?: boolean;
@@ -92,18 +98,18 @@ export default class CWSimulationBridge {
   }
 
   /** Store a new smart contract code in the simulation & re-sync bridge. */
-  storeCode(sender: string, name: string, content: Buffer, schema: JSON, funds: Coin[] = []) {
-    const codeId = this.app.wasm.create(sender, content);
+  storeCode(sender: string, fileUpload: FileUploadType, funds: Coin[] = []) {
+    const codeId = this.app.wasm.create(sender, fileUpload.content as Buffer);
 
     // inject contract name for convenient lookup.
     this.codes.tx(setter => {
-      setter(codeId, 'name')(name);
+      setter(codeId, 'name')(fileUpload.name);
       return Ok(undefined);
     });
 
     // Store schema for contract
     this.contracts.tx(setter => {
-      setter(name, 'schema')(schema);
+      setter(fileUpload.name, 'schema')(fileUpload.schema);
       return Ok(undefined);
     });
 

@@ -30,6 +30,9 @@ import useSimulation from "../../hooks/useSimulation";
 import FileUpload, { extractByteCode } from "../upload/FileUpload";
 import FileUploadPaper from "../upload/FileUploadPaper";
 import JunoSvgIcon from "./JunoIcon";
+import { ReactComponent as OsmosisIcon } from "@public/osmosis.svg";
+import axios from "axios";
+import { FileUploadType } from "../../CWSimulationBridge";
 
 export interface ISampleContract {
   name: string;
@@ -113,12 +116,6 @@ const SAMPLE_CONTRACTS: ISampleContract[] = [
   },
 ];
 
-interface SimulationFileType {
-  filename: string;
-  schema: JSON;
-  fileContent: Buffer | JSON;
-}
-
 const getSampleContractsForChain = (chain: string) => {
   return SAMPLE_CONTRACTS.filter((c) => c.chain.includes(chain)).map(
     (c) => c.name
@@ -161,9 +158,9 @@ export default function WelcomeScreen() {
         const wasmFile = Buffer.from(extractByteCode(response.data));
         console.log(schema.data);
         const newFile = {
-          filename: key,
+          name: key,
           schema: schema.data,
-          fileContent: wasmFile,
+          content: wasmFile,
         };
         wasmFiles.push(newFile);
       } catch (e) {
@@ -185,7 +182,7 @@ export default function WelcomeScreen() {
       return;
     }
 
-    if (files[0].filename.endsWith(".wasm")) {
+    if (files[0].name.endsWith(".wasm")) {
       const chainConfig = getChainConfig(chain);
       setLastChainId(chainConfig.chainId);
       sim.recreate(chainConfig);
@@ -206,11 +203,8 @@ export default function WelcomeScreen() {
   }, [sim, files, chain]);
 
   const onAcceptFile = useCallback(
-    async (filename: string, schema: JSON, fileContent: Buffer | JSON) => {
-      setFiles((prevFiles) => [
-        ...prevFiles,
-        { filename, schema, fileContent },
-      ]);
+    async (name: string, schema: JSON, content: Buffer | JSON) => {
+      setFiles((prevFiles) => [...prevFiles, { name, schema, content }]);
     },
     []
   );
