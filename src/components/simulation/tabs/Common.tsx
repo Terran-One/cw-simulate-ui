@@ -71,3 +71,66 @@ export const BeautifyJSON = ({
     </IconButton>
   );
 };
+
+export const JSONSchemaFormIcon = ({ onClick }: { onClick: any }) => {
+  const theme = useMuiTheme();
+  return (
+    <IconButton
+      aria-label="beautify"
+      color="primary"
+      onClick={onClick}
+      sx={{ ml: 1 }}
+    >
+      <DynamicForm sx={{ color: theme.palette.common.white }} />
+      <Typography
+        variant="body2"
+        color={theme.palette.common.white}
+        sx={{ ml: 1 }}
+      >
+        Form
+      </Typography>
+    </IconButton>
+  );
+};
+
+export interface IFormDialogProps {
+  schema: any;
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (e: any) => void;
+}
+
+/**
+ * Sanitize the schema to remove any properties that are not supported by the JSON Schema standard.
+ * 1. Replace `uint64` with `integer`
+ * 2. Remove "format": "integer", as it is not supported by the JSON Schema standard.
+ * @param schema
+ */
+export function sanitizeSchema(schema: any) {
+  return JSON.parse(
+    JSON.stringify(schema)
+      .replace(/"uint64"/g, '"integer"')
+      .replace(/"format": "integer",/g, "")
+  );
+}
+
+export const JSONSchemaFormDialog = ({
+  schema,
+  open,
+  onClose,
+  onSubmit,
+}: IFormDialogProps) => {
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>JSON Schema Form</DialogTitle>
+      <DialogContent sx={{ minWidth: 380 }}>
+        <Form
+          schema={sanitizeSchema(schema)}
+          validator={validator}
+          onChange={() => console.log("changed")}
+          onSubmit={onSubmit}
+        />
+      </DialogContent>
+    </Dialog>
+  );
+};

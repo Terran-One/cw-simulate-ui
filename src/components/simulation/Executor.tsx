@@ -12,6 +12,7 @@ import CollapsibleWidget from "../CollapsibleWidget";
 import AccountPopover from "./AccountPopover";
 import { Coin } from "@terran-one/cw-simulate/dist/types";
 import useMuiTheme from "@mui/material/styles/useTheme";
+import * as testJSON from "../../utils/jsonSchema/test.json";
 
 interface IProps {
   contractAddress: string;
@@ -70,6 +71,13 @@ export default function Executor({ contractAddress }: IProps) {
       height={280}
       right={
         <>
+          <JSONSchemaFormIcon onClick={onHandleClickSchemaForm} />
+          <JSONSchemaFormDialog
+            schema={executeSchema || {}}
+            open={openSchemaFormDialog}
+            onClose={() => setOpenSchemaFormDialog(false)}
+            onSubmit={(e) => console.log(e.formData)}
+          />
           <BeautifyJSON
             onChange={setPayload}
             disabled={!payload.length || !isJsonValid}
