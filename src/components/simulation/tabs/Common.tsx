@@ -8,6 +8,11 @@ import { TraceLog } from "@terran-one/cw-simulate";
 import beautify from "json-beautify-fix";
 import React, { PropsWithChildren } from "react";
 import { SxProps } from "@mui/material";
+import useMuiTheme from "@mui/material/styles/useTheme";
+import Form from "@rjsf/mui";
+import validator from "@rjsf/validator-ajv8";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { DynamicForm } from "@mui/icons-material";
 
 export interface IInspectorTabProps {
   traceLog: TraceLog | undefined;
@@ -52,6 +57,7 @@ export const BeautifyJSON = ({
   disabled: boolean;
   sx: SxProps;
 }) => {
+  const theme = useMuiTheme();
   return (
     <IconButton
       aria-label="beautify"

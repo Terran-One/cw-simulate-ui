@@ -7,12 +7,15 @@ import T1Container from "../grid/T1Container";
 import useSimulation from "../../hooks/useSimulation";
 import { useAccounts } from "../../CWSimulationBridge";
 import { activeStepState } from "../../atoms/simulationPageAtoms";
-import { BeautifyJSON } from "./tabs/Common";
+import {
+  BeautifyJSON,
+  JSONSchemaFormDialog,
+  JSONSchemaFormIcon,
+} from "./tabs/Common";
 import CollapsibleWidget from "../CollapsibleWidget";
 import AccountPopover from "./AccountPopover";
 import { Coin } from "@terran-one/cw-simulate/dist/types";
 import useMuiTheme from "@mui/material/styles/useTheme";
-import * as testJSON from "../../utils/jsonSchema/test.json";
 
 interface IProps {
   contractAddress: string;
@@ -20,10 +23,7 @@ interface IProps {
 
 export const getFormattedStep = (step: string) => {
   const activeStepArr = step.split("-").map((ele) => Number(ele) + 1);
-  let formattedStep = activeStepArr
-    .slice(0, activeStepArr.length - 1)
-    .join(".");
-  return formattedStep;
+  return activeStepArr.slice(0, activeStepArr.length - 1).join(".");
 };
 
 export default function Executor({ contractAddress }: IProps) {
@@ -41,7 +41,10 @@ export default function Executor({ contractAddress }: IProps) {
     [],
   ]);
   const sender = account;
-
+  const schema = sim.getSchema(contractAddress);
+  // @ts-ignore
+  const executeSchema = schema?.schema.execute;
+  const [openSchemaFormDialog, setOpenSchemaFormDialog] = useState(false);
   const activeStep = useAtomValue(activeStepState);
   const handleExecute = async () => {
     try {
@@ -65,6 +68,10 @@ export default function Executor({ contractAddress }: IProps) {
   }, [contractAddress]);
 
   const isValid = isJsonValid && isAccountValid;
+  const onHandleClickSchemaForm = () => {
+    setOpenSchemaFormDialog(true);
+  };
+
   return (
     <CollapsibleWidget
       title={"Execute"}

@@ -30,8 +30,6 @@ import useSimulation from "../../hooks/useSimulation";
 import FileUpload, { extractByteCode } from "../upload/FileUpload";
 import FileUploadPaper from "../upload/FileUploadPaper";
 import JunoSvgIcon from "./JunoIcon";
-import { ReactComponent as OsmosisIcon } from "@public/osmosis.svg";
-import axios from "axios";
 import { FileUploadType } from "../../CWSimulationBridge";
 
 export interface ISampleContract {
@@ -130,7 +128,7 @@ export default function WelcomeScreen() {
   const sim = useSimulation();
   const setLastChainId = useSetAtom(lastChainIdState);
 
-  const [files, setFiles] = useState<SimulationFileType[]>([]);
+  const [files, setFiles] = useState<FileUploadType[]>([]);
   const setNotification = useNotification();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -146,7 +144,7 @@ export default function WelcomeScreen() {
       return;
     }
     setLoading(true);
-    let wasmFiles: SimulationFileType[] = [];
+    let wasmFiles: FileUploadType[] = [];
     for (const key of contract.keys) {
       try {
         const response = await axios.get(`/r2/${contract.id}/${key}`, {
@@ -188,15 +186,9 @@ export default function WelcomeScreen() {
       sim.recreate(chainConfig);
       sim.setBalance(chainConfig.sender, chainConfig.funds);
       for (const file of files) {
-        sim.storeCode(
-          chainConfig.sender,
-          file.filename,
-          file.fileContent as Buffer,
-          file.schema,
-          chainConfig.funds
-        );
+        sim.storeCode(chainConfig.sender, file, chainConfig.funds);
       }
-    } else if (files[0].filename.endsWith(".json")) {
+    } else if (files[0].name.endsWith(".json")) {
       setNotification("Feature coming soon", { severity: "error" });
       throw new Error("not yet implemented");
     }

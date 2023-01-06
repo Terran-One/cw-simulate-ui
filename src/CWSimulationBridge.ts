@@ -10,7 +10,7 @@ type Watcher<T> = {
   /** Must be the same object instance as returned by reducer */
   state: WatcherState<T>;
   dispatch: Dispatch<T>;
-}
+};
 
 type WatcherState<T> = {
   params: {
@@ -25,31 +25,31 @@ type WatcherState<T> = {
   };
   /** Current value. Used in comparison. */
   value: T;
-}
+};
 
 export type WatcherComparator<T = unknown> = (last: T, curr: T) => boolean;
 export type WatcherCommitter<T = unknown> = (raw: T) => T;
 
 export type AccountEx = {
   label?: string;
-}
+};
 
 export type FileUploadType = {
   name: string;
   schema: JSON;
   content: Buffer | JSON;
-}
+};
 
 export type CodeInfoEx = CodeInfo & {
   name?: string;
   schema?: JSON;
   hidden?: boolean;
-}
+};
 
 export type ContractInfoEx = ContractInfo & {
   trace?: TraceLog[];
   hidden?: boolean;
-}
+};
 
 export default class CWSimulationBridge {
   private app = new CWSimulateApp(defaults.chains.terra);
@@ -87,7 +87,7 @@ export default class CWSimulationBridge {
 
   /** Get all accounts from the simulation. */
   getAccounts() {
-    return this.app.bank.store.getObject('balances');
+    return this.app.bank.store.getObject("balances");
   }
 
   /** Get a specific contract code from the simulation, augmented by given `codeId` for convenience. */
@@ -102,9 +102,9 @@ export default class CWSimulationBridge {
     const codeId = this.app.wasm.create(sender, fileUpload.content as Buffer);
 
     // inject contract name for convenient lookup.
-    this.codes.tx(setter => {
-      setter(codeId, 'name')(fileUpload.name);
-      setter(codeId, 'schema')(fileUpload.schema);
+    this.codes.tx((setter) => {
+      setter(codeId, "name")(fileUpload.name);
+      setter(codeId, "schema")(fileUpload.schema);
       return Ok(undefined);
     });
 
@@ -112,10 +112,20 @@ export default class CWSimulationBridge {
     return codeId;
   }
 
+  storeSchema(codeId: number, fileUpload: FileUploadType) {
+    const code = this.getCode(codeId);
+    if (!code) return;
+    this.codes.tx((setter) => {
+      setter(codeId, "schema")(fileUpload.schema);
+      return Ok(undefined);
+    });
+    this.sync();
+  }
+
   /** Hide a contract from the UI - it is not actually deleted - and re-sync bridge. */
   hideCode(codeId: number) {
-    this.codes.tx(setter => {
-      setter(codeId, 'hidden')(true);
+    this.codes.tx((setter) => {
+      setter(codeId, "hidden")(true);
       return Ok(undefined);
     });
     this.sync();
@@ -131,7 +141,7 @@ export default class CWSimulationBridge {
     if (!contract) return;
     const code = this.getCode(contract.codeId);
     if (!code) return;
-    return Object.assign({schema: code.schema}, { name: code.name });
+    return Object.assign({ schema: code.schema }, { name: code.name });
   }
 
   /** Get contract associated with given address, and augment contract info with same address for convenience. */
@@ -142,24 +152,40 @@ export default class CWSimulationBridge {
   }
 
   /** Create a new contract instance by `codeId` & re-sync bridge. */
-  async instantiate(sender: string, codeId: number, msg: any, funds: Coin[] = [], label:string) {
+  async instantiate(
+    sender: string,
+    codeId: number,
+    msg: any,
+    funds: Coin[] = [],
+    label: string
+  ) {
     if (!this.getCode(codeId)) throw new Error(`Invalid codeId ${codeId}`);
 
     const trace: TraceLog[] = [];
-    const result = await this.app.wasm.instantiateContract(sender, funds, codeId, msg, label, trace);
+    const result = await this.app.wasm.instantiateContract(
+      sender,
+      funds,
+      codeId,
+      msg,
+      label,
+      trace
+    );
     const response = result.unwrap();
 
     const evt = response.events[0];
-    if (evt.type !== 'instantiate') throw new Error('Expected instantiation event');
-    const address = evt.attributes.find(attr => attr.key === '_contract_address')?.value;
+    if (evt.type !== "instantiate")
+      throw new Error("Expected instantiation event");
+    const address = evt.attributes.find(
+      (attr) => attr.key === "_contract_address"
+    )?.value;
     if (!address) {
-      console.error('Failed to instantiate. Response:', response);
-      throw new Error('Failed to instantiate. See logs for details');
+      console.error("Failed to instantiate. Response:", response);
+      throw new Error("Failed to instantiate. See logs for details");
     }
 
     const info = this.getContract(address)!;
-    this.contracts.tx(setter => {
-      setter(address, 'trace')(trace);
+    this.contracts.tx((setter) => {
+      setter(address, "trace")(trace);
       return Ok(undefined);
     });
 
@@ -168,14 +194,26 @@ export default class CWSimulationBridge {
   }
 
   /** Execute given smart contract & re-sync bridge. */
-  async execute(sender: string, contractAddress: string, msg: any, funds: Coin[] = []) {
+  async execute(
+    sender: string,
+    contractAddress: string,
+    msg: any,
+    funds: Coin[] = []
+  ) {
     const info = this.getContract(contractAddress);
-    if (!info) throw new Error(`No such contract with address ${contractAddress}`);
+    if (!info)
+      throw new Error(`No such contract with address ${contractAddress}`);
 
     const trace = info.trace ?? [];
-    const result = await this.app.wasm.executeContract(sender, funds, contractAddress, msg, trace);
-    this.contracts.tx(setter => {
-      setter(contractAddress, 'trace')(trace);
+    const result = await this.app.wasm.executeContract(
+      sender,
+      funds,
+      contractAddress,
+      msg,
+      trace
+    );
+    this.contracts.tx((setter) => {
+      setter(contractAddress, "trace")(trace);
       return Ok(undefined);
     });
     this.sync();
@@ -184,8 +222,8 @@ export default class CWSimulationBridge {
 
   /** Hide contract associated with address - it is not actually removed from the simulation - and re-sync bridge. */
   hideContract(address: string) {
-    this.contracts.tx(setter => {
-      setter(address, 'hidden')(true);
+    this.contracts.tx((setter) => {
+      setter(address, "hidden")(true);
       return Ok(undefined);
     });
     this.sync();
@@ -214,9 +252,9 @@ export default class CWSimulationBridge {
     /** Whether last stored value is equal to current. Defaults to strict equality. */
     compare: WatcherComparator<T> = compareStrict,
     /** Optional committer. Creates a non-mutable snapshot of the given state. Defaults to identity. */
-    commit: WatcherCommitter<T> = val => val,
+    commit: WatcherCommitter<T> = (val) => val,
     deps: DependencyList = [],
-    debug?: string,
+    debug?: string
   ) {
     const params = { filter, compare, commit, debug };
 
@@ -252,8 +290,12 @@ export default class CWSimulationBridge {
   /** Execute smart query using `msg` on given `step`'s trace log. */
   async query(contractAddress: string, msg: any, step: string) {
     const info = this.getContract(contractAddress);
-    if (!info) throw new Error(`No such contract with address ${contractAddress}`);
-    return await this.app.wasm.queryTrace(getStepTrace(step, info.trace ?? []), msg);
+    if (!info)
+      throw new Error(`No such contract with address ${contractAddress}`);
+    return await this.app.wasm.queryTrace(
+      getStepTrace(step, info.trace ?? []),
+      msg
+    );
   }
   
   save() {
@@ -286,7 +328,7 @@ export default class CWSimulationBridge {
     for (const watcher of this.watchers) {
       if (watcher.state === state) return watcher;
     }
-  }
+  };
 
   /** Evaluate the given watcher, detecting if changes have occurred
    * and triggering UI updates where appropriate.
@@ -294,12 +336,7 @@ export default class CWSimulationBridge {
   private evaluateWatcher = (inst: Watcher<any>) => {
     const {
       state: {
-        params: {
-          filter,
-          compare,
-          commit,
-          debug,
-        },
+        params: { filter, compare, commit, debug },
         value: last,
       },
       dispatch,
@@ -310,7 +347,7 @@ export default class CWSimulationBridge {
       debug && console.log(`[${debug}] update`);
       dispatch(commit(next));
     }
-  }
+  };
 
   /** Shorten the given address if its length is > `minLength`. Recommended & default `minLength` is 20. */
   shortenAddress(addr: string, minLength = 20) {
@@ -319,13 +356,12 @@ export default class CWSimulationBridge {
     const prefix = this.bech32Prefix;
     if (!addr.startsWith(prefix)) {
       const before = addr.substring(0, 10);
-      const after  = addr.substring(addr.length - 5);
+      const after = addr.substring(addr.length - 5);
       return `${before}...${after}`;
-    }
-    else {
+    } else {
       const prefixless = addr.substring(prefix.length);
       const before = prefixless.substring(0, 5);
-      const after  = prefixless.substring(prefixless.length - 5);
+      const after = prefixless.substring(prefixless.length - 5);
       return `${prefix}${before}...${after}`;
     }
   }
@@ -341,7 +377,10 @@ export default class CWSimulationBridge {
   get contracts() { return this._contracts! }
 }
 
-function useBridgeReducer<T>(app: CWSimulateApp, params: Omit<WatcherState<T>['params'], 'value'>) {
+function useBridgeReducer<T>(
+  app: CWSimulateApp,
+  params: Omit<WatcherState<T>["params"], "value">
+) {
   const { filter, commit } = params;
   return useReducer(
     (state: WatcherState<T>, next: T) => {
@@ -352,22 +391,19 @@ function useBridgeReducer<T>(app: CWSimulateApp, params: Omit<WatcherState<T>['p
     },
     // use initializer arg w/ initializer so initial `value` is computed only once
     params,
-    (params => ({ params, value: commit(filter(app)) })),
+    (params) => ({ params, value: commit(filter(app)) })
   );
 }
 
 export function useAccounts(bridge: CWSimulationBridge) {
-  return bridge.useWatcher(
-    app => {
-      const balances = app.bank.store.getObject('balances');
-      const contractAddresses = app.wasm.store.get('contracts').keys();
-      for (const contractAddress of contractAddresses) {
-        delete balances[contractAddress];
-      }
-      return balances;
-    },
-    compareShallowObject,
-  );
+  return bridge.useWatcher((app) => {
+    const balances = app.bank.store.getObject("balances");
+    const contractAddresses = app.wasm.store.get("contracts").keys();
+    for (const contractAddress of contractAddresses) {
+      delete balances[contractAddress];
+    }
+    return balances;
+  }, compareShallowObject);
 }
 
 export function useCode(bridge: CWSimulationBridge, codeId: number) {
@@ -375,37 +411,34 @@ export function useCode(bridge: CWSimulationBridge, codeId: number) {
     () => bridge.getCode(codeId),
     compareCodes,
     undefined,
-    [codeId],
+    [codeId]
   );
 }
 
 export function useCodes(bridge: CWSimulationBridge) {
   return bridge.useWatcher(
     () => bridge.codes.getObject() ?? {},
-    compareManyCodes,
-  )
+    compareManyCodes
+  );
 }
 
 export function useContracts(
   bridge: CWSimulationBridge,
-  compare: WatcherComparator<Record<string, ContractInfo>> = compareDeep,
+  compare: WatcherComparator<Record<string, ContractInfo>> = compareDeep
 ) {
-  return bridge.useWatcher(
-    app => bridge.contracts.getObject(),
-    compare,
-  )
+  return bridge.useWatcher((app) => bridge.contracts.getObject(), compare);
 }
 
 export function useContractTrace(
   bridge: CWSimulationBridge,
-  contractAddress: string,
+  contractAddress: string
 ) {
   // Trace is currently not persistent, but we can just commit clones for comparison
   return bridge.useWatcher(
     () => bridge.getContract(contractAddress)?.trace ?? [],
     compareShallowArray,
-    trace => trace.slice(),
-    [contractAddress],
+    (trace) => trace.slice(),
+    [contractAddress]
   );
 }
 
@@ -420,8 +453,7 @@ export function compareShallowArray(last: unknown[], curr: unknown[]) {
 }
 /** Compares each property of two objects by identity. Order of properties does not matter. */
 export function compareShallowObject(last: any, curr: any) {
-  if (!compareShallowArray(Object.keys(last), Object.keys(curr)))
-    return false;
+  if (!compareShallowArray(Object.keys(last), Object.keys(curr))) return false;
   for (const prop in last) {
     if (last[prop] !== curr[prop]) return false;
   }
@@ -429,28 +461,26 @@ export function compareShallowObject(last: any, curr: any) {
 }
 export function compareDeep(lhs: any, rhs: any): boolean {
   // easy cases
-  if (lhs === rhs)
-    return true;
-  if ([rhs, lhs].find(v => !v || typeof v !== 'object'))
-    return lhs === rhs;
+  if (lhs === rhs) return true;
+  if ([rhs, lhs].find((v) => !v || typeof v !== "object")) return lhs === rhs;
 
   // assert both objects have same keys
   const lKeys = new Set(Object.keys(lhs));
   const rKeys = new Set(Object.keys(rhs));
-  for (const key of lKeys)
-    if (!rKeys.has(key)) return false;
-  for (const key of rKeys)
-    if (!lKeys.has(key)) return false;
+  for (const key of lKeys) if (!rKeys.has(key)) return false;
+  for (const key of rKeys) if (!lKeys.has(key)) return false;
 
   // recurse
   for (const key in lhs) {
-    if (!compareDeep(lhs[key], rhs[key]))
-      return false;
+    if (!compareDeep(lhs[key], rhs[key])) return false;
   }
   return true;
 }
 
-function compareCodes(lhs: CodeInfoEx | undefined, rhs: CodeInfoEx | undefined): boolean {
+function compareCodes(
+  lhs: CodeInfoEx | undefined,
+  rhs: CodeInfoEx | undefined
+): boolean {
   if (!lhs || !rhs) return false;
   if (lhs.creator !== rhs.creator) return false;
   if (lhs.hidden !== rhs.hidden) return false;
@@ -458,19 +488,19 @@ function compareCodes(lhs: CodeInfoEx | undefined, rhs: CodeInfoEx | undefined):
   return true;
 }
 
-function compareManyCodes(lhs: Record<number, CodeInfoEx>, rhs: Record<number, CodeInfoEx>): boolean {
+function compareManyCodes(
+  lhs: Record<number, CodeInfoEx>,
+  rhs: Record<number, CodeInfoEx>
+): boolean {
   const lkeys = new Set(Object.keys(lhs)) as any as Set<number>;
   const rkeys = new Set(Object.keys(rhs)) as any as Set<number>;
   if (lkeys.size !== rkeys.size) return false;
 
-  for (const lkey of lkeys)
-    if (!rkeys.has(lkey)) return false;
-  for (const rkey of rkeys)
-    if (!lkeys.has(rkey)) return false;
+  for (const lkey of lkeys) if (!rkeys.has(lkey)) return false;
+  for (const rkey of rkeys) if (!lkeys.has(rkey)) return false;
 
   for (const key of lkeys) {
-    if (!compareCodes(lhs[key], rhs[key]))
-      return false;
+    if (!compareCodes(lhs[key], rhs[key])) return false;
   }
   return true;
 }

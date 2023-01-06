@@ -31,6 +31,7 @@ import useSimulation from "../../hooks/useSimulation";
 import { useAccounts, useCode, useCodes } from "../../CWSimulationBridge";
 import { downloadWasm } from "../../utils/fileUtils";
 import Funds from "../Funds";
+import SchemaIcon from "@mui/icons-material/Schema";
 import useDebounce from "../../hooks/useDebounce";
 import Accounts from "../Accounts";
 import { BeautifyJSON } from "../simulation/tabs/Common";
@@ -89,6 +90,7 @@ function CodeMenuItem({ codeId }: ICodeMenuItemProps) {
   const code = useCode(sim, codeId)!;
 
   const [openInstantiate, setOpenInstantiate] = useState(false);
+  const [openUploadDialog, setOpenUploadDialog] = useState(false);
   const [openDelete, setOpenDelete] = useState(false);
 
   const download = useCallback(() => {
@@ -118,6 +120,12 @@ function CodeMenuItem({ codeId }: ICodeMenuItemProps) {
           </ListItemIcon>
           <ListItemText>Delete</ListItemText>
         </MenuItem>,
+        <MenuItem key="schema" onClick={() => setOpenUploadDialog(true)}>
+          <ListItemIcon>
+            <SchemaIcon />
+          </ListItemIcon>
+          <ListItemText>Upload schema</ListItemText>
+        </MenuItem>,
       ]}
       optionsExtras={({ close }) => (
         <>
@@ -136,6 +144,17 @@ function CodeMenuItem({ codeId }: ICodeMenuItemProps) {
               setOpenDelete(false);
               close();
             }}
+          />
+          <UploadModal
+            variant="schema"
+            codeId={codeId}
+            open={openUploadDialog}
+            onClose={() => {
+              setOpenUploadDialog(false);
+              close();
+            }}
+            dropTitle="Upload Schema"
+            dropzoneText="Upload or drop a schema file here"
           />
         </>
       )}

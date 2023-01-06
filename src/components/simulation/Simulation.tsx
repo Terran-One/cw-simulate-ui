@@ -15,10 +15,8 @@ import { StateRenderer } from "./StateRenderer";
 import StateStepper from "./StateStepper";
 import Address from "../chains/Address";
 import useSimulation from "../../hooks/useSimulation";
-import validator from "@rjsf/validator-ajv8";
-import Form from "@rjsf/core";
 
-const StyledPaper = styled(Paper)(({theme}) => ({
+const StyledPaper = styled(Paper)(({ theme }) => ({
   ...theme.typography.body2,
   padding: theme.spacing(1),
 }));
@@ -32,15 +30,6 @@ function replaceUint64WithInteger(schema: any) {
   return JSON.parse(JSON.stringify(schema).replace(/uint64/g, "integer"));
 }
 
-const JSONSchemaForm = ({schema}: JSONSchemaFormProps) => {
-  return (
-    <>
-      <Form schema={replaceUint64WithInteger(schema)}
-            validator={validator}
-            onChange={() => console.log("changed")}/>
-    </>
-  )
-}
 const Simulation = () => {
   const contractAddress = useParams().instanceAddress!;
   const sim = useSimulation();
@@ -58,23 +47,22 @@ const Simulation = () => {
               gutterBottom
               fontWeight="bold"
               textAlign="center"
-              sx={{display: 'flex', justifyContent: 'center'}}
+              sx={{ display: "flex", justifyContent: "center" }}
             />
-            {Object.keys(schema?.schema as any).length === 0 ?
-              <Executor contractAddress={contractAddress}/> :
-              <JSONSchemaForm schema={executeSchema}/>}
+
+            <Executor contractAddress={contractAddress} />
           </Grid>
-          <Divider sx={{my: 1}}/>
-          <Grid item flex={1} sx={{display: "relative"}}>
+          <Divider sx={{ my: 1 }} />
+          <Grid item flex={1} sx={{ display: "relative" }}>
             <T1Container>
-              <StateStepper contractAddress={contractAddress}/>
+              <StateStepper contractAddress={contractAddress} />
             </T1Container>
           </Grid>
         </Grid>
       </Column>
       <Column xs={8} className="T1Simulation-right">
         <Widget>
-          <StateRenderer contractAddress={contractAddress}/>
+          <StateRenderer contractAddress={contractAddress} />
         </Widget>
       </Column>
     </SplitView>
@@ -88,7 +76,7 @@ interface ISplitViewProps {
   className?: string;
 }
 
-function SplitView({children, ...props}: ISplitViewProps) {
+function SplitView({ children, ...props }: ISplitViewProps) {
   return (
     <Grid
       container
@@ -109,7 +97,7 @@ interface IColumnProps extends GridSizeProps {
   className?: string;
 }
 
-function Column({children, ...props}: IColumnProps) {
+function Column({ children, ...props }: IColumnProps) {
   const theme = useTheme();
 
   return (
