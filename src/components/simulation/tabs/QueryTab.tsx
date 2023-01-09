@@ -15,6 +15,7 @@ import { BeautifyJSON, EmptyTab, TabHeader } from "./Common";
 import BlockQuote from "../../BlockQuote";
 import CopyToClipBoard from "../CopyToClipBoard";
 import useMuiTheme from "@mui/material/styles/useTheme";
+import { SchemaForm } from "../SchemaForm";
 
 interface IProps {
   contractAddress: string;
@@ -77,7 +78,9 @@ function Query({ contractAddress, onHandleQuery }: IQuery) {
   const activeStep = useAtomValue(activeStepState);
   const [payload, setPayload] = useState("");
   const [isValid, setIsValid] = useState(true);
-
+  const schema = sim.getSchema(contractAddress);
+  // @ts-ignore
+  const querySchema = schema?.schema.query;
   const handleQuery = async () => {
     try {
       const res = await sim.query(
@@ -107,11 +110,14 @@ function Query({ contractAddress, onHandleQuery }: IQuery) {
       title={`Query @${getFormattedStep(activeStep)}`}
       height={280}
       right={
-        <BeautifyJSON
-          onChange={setPayload}
-          disabled={!payload.length || !isValid}
-          sx={{ color: theme.palette.common.white }}
-        />
+        <>
+          <SchemaForm schema={querySchema} submit={setPayload} />
+          <BeautifyJSON
+            onChange={setPayload}
+            disabled={!payload.length || !isValid}
+            sx={{ color: theme.palette.common.white }}
+          />
+        </>
       }
     >
       <Grid

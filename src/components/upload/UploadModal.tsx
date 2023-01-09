@@ -10,55 +10,54 @@ import { defaults } from "../../configs/constants";
 import useSimulation from "../../hooks/useSimulation";
 import FileUpload from "./FileUpload";
 import FileUploadPaper from "./FileUploadPaper";
+import { FileUploadType } from "../../CWSimulationBridge";
 
 interface IUploadModalProps {
   dropzoneText?: string;
-  variant: 'simulation' | 'contract' | 'both';
+  variant: "simulation" | "contract" | "schema" | "both";
   dropTitle?: string;
+  codeId?: number;
   open: boolean;
-
   onClose(success: boolean): void;
 }
 
 export default function UploadModal(props: IUploadModalProps) {
-  const {
-    dropzoneText,
-    variant,
-    dropTitle,
-    open,
-    onClose,
-  } = props;
+  const { dropzoneText, variant, dropTitle, open, codeId, onClose } = props;
   const sim = useSimulation();
   const navigate = useNavigate();
 
-  const [file, setFile] = useState<{ filename: string, fileContent: Buffer | JSON } | undefined>();
+  const [file, setFile] = useState<FileUploadType | undefined>();
   const setNotification = useNotification();
 
   const handleAdd = useCallback(async () => {
     if (!file) {
-      setNotification("Internal error. Please check logs.", {severity: "error"});
-      console.error('no file uploaded');
+      setNotification("Internal error. Please check logs.", {
+        severity: "error",
+      });
+      console.error("no file uploaded");
       return;
     }
 
-    if (variant === 'contract') {
+    if (variant === "contract") {
       const sender = Object.keys(sim.getAccounts())[0];
       if (!sender) {
-        setNotification("At least one account is required to upload a contract. Please add an account.", { severity: 'error' });
+        setNotification(
+          "At least one account is required to upload a contract. Please add an account.",
+          { severity: "error" }
+        );
         navigate("/accounts");
         return;
       }
-
-      sim.storeCode(sender, file.filename, file.fileContent as Buffer);
-    }
-    else if (variant === 'simulation') {
+      sim.storeCode(sender, file);
+    } else if (variant === "schema" && codeId) {
+      sim.storeSchema(codeId, file);
+    } else if (variant === "simulation") {
       try {
         // TODO: rehydrate from JSON
         //const json = file.fileContent as any;
         sim.recreate(defaults.chains.terra);
-      }
-      catch (e: any) {
-        setNotification(e.message, {severity: "error"});
+      } catch (e: any) {
+        setNotification(e.message, { severity: "error" });
         console.error(e);
       }
     }
@@ -67,14 +66,16 @@ export default function UploadModal(props: IUploadModalProps) {
 
   return (
     <Dialog open={open} onClose={() => onClose(false)}>
-      <DialogTitle>{dropTitle ?? 'Upload Code'}</DialogTitle>
-      <DialogContent sx={{ width: '50vw', maxWidth: 600 }}>
-        <FileUploadPaper sx={{ width: '100%', minHeight: 180 }}>
+      <DialogTitle>{dropTitle ?? "Upload Code"}</DialogTitle>
+      <DialogContent sx={{ width: "50vw", maxWidth: 600 }}>
+        <FileUploadPaper sx={{ width: "100%", minHeight: 180 }}>
           <FileUpload
-            dropzoneText={dropzoneText ?? "Upload or drop a .wasm contract binary here"}
-            variant={variant ?? 'contract'}
-            onAccept={(filename: string, fileContent: Buffer | JSON) => {
-              setFile({filename, fileContent});
+            dropzoneText={
+              dropzoneText ?? "Upload or drop a .wasm contract binary here"
+            }
+            variant={variant ?? "contract"}
+            onAccept={(name: string, schema: JSON, content: Buffer | JSON) => {
+              setFile({ name, schema, content });
             }}
             onClear={() => {
               setFile(undefined);

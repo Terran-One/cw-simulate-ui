@@ -30,6 +30,7 @@ import useSimulation from "../../hooks/useSimulation";
 import FileUpload, { extractByteCode } from "../upload/FileUpload";
 import FileUploadPaper from "../upload/FileUploadPaper";
 import JunoSvgIcon from "./JunoIcon";
+import { FileUploadType } from "../../CWSimulationBridge";
 
 export interface ISampleContract {
   name: string;
@@ -113,22 +114,21 @@ const SAMPLE_CONTRACTS: ISampleContract[] = [
   },
 ];
 
-interface SimulationFileType {
-  filename: string;
-  fileContent: Buffer | JSON;
-}
-
 const getSampleContractsForChain = (chain: string) => {
   return SAMPLE_CONTRACTS.filter((c) => c.chain.includes(chain)).map(
     (c) => c.name
   );
 };
 
+const getJsonFileName = (filename: string) => {
+  return filename.replace(".wasm", ".json");
+};
+
 export default function WelcomeScreen() {
   const sim = useSimulation();
   const setLastChainId = useSetAtom(lastChainIdState);
-  
-  const [files, setFiles] = useState<SimulationFileType[]>([]);
+
+  const [files, setFiles] = useState<FileUploadType[]>([]);
   const setNotification = useNotification();
   const navigate = useNavigate();
   const theme = useTheme();
@@ -144,16 +144,21 @@ export default function WelcomeScreen() {
       return;
     }
     setLoading(true);
-    let wasmFiles: SimulationFileType[] = [];
+    let wasmFiles: FileUploadType[] = [];
     for (const key of contract.keys) {
       try {
         const response = await axios.get(`/r2/${contract.id}/${key}`, {
           responseType: "arraybuffer",
         });
+        const schema = await axios.get(
+          `/r2/${contract.id}/${getJsonFileName(key)}`
+        );
         const wasmFile = Buffer.from(extractByteCode(response.data));
+        console.log(schema.data);
         const newFile = {
-          filename: key,
-          fileContent: wasmFile,
+          name: key,
+          schema: schema.data,
+          content: wasmFile,
         };
         wasmFiles.push(newFile);
       } catch (e) {
@@ -175,28 +180,23 @@ export default function WelcomeScreen() {
       return;
     }
 
-    if (files[0].filename.endsWith(".wasm")) {
+    if (files[0].name.endsWith(".wasm")) {
       const chainConfig = getChainConfig(chain);
       setLastChainId(chainConfig.chainId);
       sim.recreate(chainConfig);
       sim.setBalance(chainConfig.sender, chainConfig.funds);
       for (const file of files) {
-        sim.storeCode(
-          chainConfig.sender,
-          file.filename,
-          file.fileContent as Buffer,
-          chainConfig.funds
-        );
+        sim.storeCode(chainConfig.sender, file, chainConfig.funds);
       }
-    } else if (files[0].filename.endsWith(".json")) {
-      setNotification('Feature coming soon', { severity: 'error' });
-      throw new Error('not yet implemented');
+    } else if (files[0].name.endsWith(".json")) {
+      setNotification("Feature coming soon", { severity: "error" });
+      throw new Error("not yet implemented");
     }
   }, [sim, files, chain]);
 
   const onAcceptFile = useCallback(
-    async (filename: string, fileContent: Buffer | JSON) => {
-      setFiles((prevFiles) => [...prevFiles, { filename, fileContent }]);
+    async (name: string, schema: JSON, content: Buffer | JSON) => {
+      setFiles((prevFiles) => [...prevFiles, { name, schema, content }]);
     },
     []
   );

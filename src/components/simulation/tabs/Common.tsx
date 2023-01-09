@@ -8,6 +8,11 @@ import { TraceLog } from "@terran-one/cw-simulate";
 import beautify from "json-beautify-fix";
 import React, { PropsWithChildren } from "react";
 import { SxProps } from "@mui/material";
+import useMuiTheme from "@mui/material/styles/useTheme";
+import Form from "@rjsf/mui";
+import validator from "@rjsf/validator-ajv8";
+import { Dialog, DialogContent, DialogTitle } from "@mui/material";
+import { DynamicForm } from "@mui/icons-material";
 
 export interface IInspectorTabProps {
   traceLog: TraceLog | undefined;
@@ -52,6 +57,7 @@ export const BeautifyJSON = ({
   disabled: boolean;
   sx: SxProps;
 }) => {
+  const theme = useMuiTheme();
   return (
     <IconButton
       aria-label="beautify"
@@ -69,5 +75,76 @@ export const BeautifyJSON = ({
         Tidy
       </Typography>
     </IconButton>
+  );
+};
+
+export const JSONSchemaFormIcon = ({
+  onClick,
+  iconColor,
+}: {
+  onClick: any;
+  iconColor?: string;
+}) => {
+  const theme = useMuiTheme();
+  return (
+    <IconButton
+      aria-label="beautify"
+      color="primary"
+      onClick={onClick}
+      sx={{ ml: 1 }}
+    >
+      <DynamicForm
+        sx={{ color: iconColor ? iconColor : theme.palette.common.white }}
+      />
+      <Typography
+        variant="body2"
+        color={iconColor ? iconColor : theme.palette.common.white}
+        sx={{ ml: 1 }}
+      >
+        Form
+      </Typography>
+    </IconButton>
+  );
+};
+
+export interface IFormDialogProps {
+  schema: any;
+  open: boolean;
+  onClose: () => void;
+  onSubmit: (e: any) => void;
+}
+
+/**
+ * Sanitize the schema to remove any properties that are not supported by the JSON Schema standard.
+ * 1. Replace `uint64` with `integer`
+ * 2. Remove "format": "integer", as it is not supported by the JSON Schema standard.
+ * @param schema
+ */
+export function sanitizeSchema(schema: any) {
+  return JSON.parse(
+    JSON.stringify(schema)
+      .replace(/"uint64"/g, '"integer"')
+      .replace(/"format": "integer",/g, "")
+  );
+}
+
+export const JSONSchemaFormDialog = ({
+  schema,
+  open,
+  onClose,
+  onSubmit,
+}: IFormDialogProps) => {
+  return (
+    <Dialog open={open} onClose={onClose}>
+      <DialogTitle>JSON Schema Form</DialogTitle>
+      <DialogContent sx={{ minWidth: 380 }}>
+        <Form
+          schema={sanitizeSchema(schema)}
+          validator={validator}
+          onChange={() => console.log("changed")}
+          onSubmit={onSubmit}
+        />
+      </DialogContent>
+    </Dialog>
   );
 };

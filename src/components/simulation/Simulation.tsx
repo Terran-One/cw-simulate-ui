@@ -14,14 +14,28 @@ import Executor from "./Executor";
 import { StateRenderer } from "./StateRenderer";
 import StateStepper from "./StateStepper";
 import Address from "../chains/Address";
+import useSimulation from "../../hooks/useSimulation";
 
 const StyledPaper = styled(Paper)(({ theme }) => ({
   ...theme.typography.body2,
   padding: theme.spacing(1),
 }));
 
+interface JSONSchemaFormProps {
+  schema: any;
+}
+
+// Replace all "uint64" with "integer" in the JSON schema
+function replaceUint64WithInteger(schema: any) {
+  return JSON.parse(JSON.stringify(schema).replace(/uint64/g, "integer"));
+}
+
 const Simulation = () => {
   const contractAddress = useParams().instanceAddress!;
+  const sim = useSimulation();
+  const schema = sim.getSchema(contractAddress);
+  // @ts-ignore
+  const executeSchema = schema?.schema.execute;
 
   return (
     <SplitView className="T1Simulation-root">
@@ -33,8 +47,9 @@ const Simulation = () => {
               gutterBottom
               fontWeight="bold"
               textAlign="center"
-              sx={{ display: 'flex', justifyContent: 'center' }}
+              sx={{ display: "flex", justifyContent: "center" }}
             />
+
             <Executor contractAddress={contractAddress} />
           </Grid>
           <Divider sx={{ my: 1 }} />

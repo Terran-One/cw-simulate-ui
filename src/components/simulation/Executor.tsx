@@ -12,6 +12,7 @@ import CollapsibleWidget from "../CollapsibleWidget";
 import AccountPopover from "./AccountPopover";
 import { Coin } from "@terran-one/cw-simulate/dist/types";
 import useMuiTheme from "@mui/material/styles/useTheme";
+import { SchemaForm } from "./SchemaForm";
 
 interface IProps {
   contractAddress: string;
@@ -19,10 +20,7 @@ interface IProps {
 
 export const getFormattedStep = (step: string) => {
   const activeStepArr = step.split("-").map((ele) => Number(ele) + 1);
-  let formattedStep = activeStepArr
-    .slice(0, activeStepArr.length - 1)
-    .join(".");
-  return formattedStep;
+  return activeStepArr.slice(0, activeStepArr.length - 1).join(".");
 };
 
 export default function Executor({ contractAddress }: IProps) {
@@ -40,6 +38,9 @@ export default function Executor({ contractAddress }: IProps) {
     [],
   ]);
   const sender = account;
+  const schema = sim.getSchema(contractAddress);
+  // @ts-ignore
+  const executeSchema = schema?.schema.execute;
 
   const activeStep = useAtomValue(activeStepState);
   const handleExecute = async () => {
@@ -64,12 +65,14 @@ export default function Executor({ contractAddress }: IProps) {
   }, [contractAddress]);
 
   const isValid = isJsonValid && isAccountValid;
+
   return (
     <CollapsibleWidget
       title={"Execute"}
       height={280}
       right={
         <>
+          <SchemaForm schema={executeSchema} submit={setPayload} />
           <BeautifyJSON
             onChange={setPayload}
             disabled={!payload.length || !isJsonValid}
