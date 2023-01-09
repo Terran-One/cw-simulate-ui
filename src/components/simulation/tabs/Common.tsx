@@ -78,7 +78,13 @@ export const BeautifyJSON = ({
   );
 };
 
-export const JSONSchemaFormIcon = ({ onClick }: { onClick: any }) => {
+export const JSONSchemaFormIcon = ({
+  onClick,
+  iconColor,
+}: {
+  onClick: any;
+  iconColor?: string;
+}) => {
   const theme = useMuiTheme();
   return (
     <IconButton
@@ -87,10 +93,12 @@ export const JSONSchemaFormIcon = ({ onClick }: { onClick: any }) => {
       onClick={onClick}
       sx={{ ml: 1 }}
     >
-      <DynamicForm sx={{ color: theme.palette.common.white }} />
+      <DynamicForm
+        sx={{ color: iconColor ? iconColor : theme.palette.common.white }}
+      />
       <Typography
         variant="body2"
-        color={theme.palette.common.white}
+        color={iconColor ? iconColor : theme.palette.common.white}
         sx={{ ml: 1 }}
       >
         Form

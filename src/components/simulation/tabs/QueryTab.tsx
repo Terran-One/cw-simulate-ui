@@ -11,16 +11,11 @@ import { useAtomValue } from "jotai";
 import { activeStepState } from "../../../atoms/simulationPageAtoms";
 import { getFormattedStep } from "../Executor";
 import { Result } from "ts-results/result";
-import {
-  BeautifyJSON,
-  EmptyTab,
-  JSONSchemaFormDialog,
-  JSONSchemaFormIcon,
-  TabHeader,
-} from "./Common";
+import { BeautifyJSON, EmptyTab, TabHeader } from "./Common";
 import BlockQuote from "../../BlockQuote";
 import CopyToClipBoard from "../CopyToClipBoard";
 import useMuiTheme from "@mui/material/styles/useTheme";
+import { SchemaForm } from "../SchemaForm";
 
 interface IProps {
   contractAddress: string;
@@ -83,10 +78,9 @@ function Query({ contractAddress, onHandleQuery }: IQuery) {
   const activeStep = useAtomValue(activeStepState);
   const [payload, setPayload] = useState("");
   const [isValid, setIsValid] = useState(true);
-  const [openSchemaFormDialog, setOpenSchemaFormDialog] = useState(false);
   const schema = sim.getSchema(contractAddress);
   // @ts-ignore
-  const executeSchema = schema?.schema.query;
+  const querySchema = schema?.schema.query;
   const handleQuery = async () => {
     try {
       const res = await sim.query(
@@ -104,9 +98,7 @@ function Query({ contractAddress, onHandleQuery }: IQuery) {
       });
     }
   };
-  const onHandleClickSchemaForm = () => {
-    setOpenSchemaFormDialog(true);
-  };
+
   useEffect(() => {
     if (payload) handleQuery();
   }, [activeStep]);
@@ -119,13 +111,7 @@ function Query({ contractAddress, onHandleQuery }: IQuery) {
       height={280}
       right={
         <>
-          <JSONSchemaFormIcon onClick={onHandleClickSchemaForm} />
-          <JSONSchemaFormDialog
-            schema={executeSchema || {}}
-            open={openSchemaFormDialog}
-            onClose={() => setOpenSchemaFormDialog(false)}
-            onSubmit={(e) => console.log(e.formData)}
-          />
+          <SchemaForm schema={querySchema} submit={setPayload} />
           <BeautifyJSON
             onChange={setPayload}
             disabled={!payload.length || !isValid}

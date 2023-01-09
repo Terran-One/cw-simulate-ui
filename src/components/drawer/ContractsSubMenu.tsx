@@ -36,6 +36,7 @@ import useDebounce from "../../hooks/useDebounce";
 import Accounts from "../Accounts";
 import { BeautifyJSON } from "../simulation/tabs/Common";
 import useMuiTheme from "@mui/material/styles/useTheme";
+import { SchemaForm } from "../simulation/SchemaForm";
 
 export interface IContractsSubMenuProps {}
 
@@ -212,6 +213,9 @@ function InstantiateDialog(props: IInstantiateDialogProps) {
   const accounts = useAccounts(sim);
   const defaultAccount = Object.keys(accounts)[0] || "";
   const [isJsonValid, setIsJsonValid] = useState(true);
+  const schema = code.schema;
+  // @ts-ignore
+  const instantiateSchema = schema ? schema.instantiate : {};
   const setDrawerSubMenu = useSetAtom(drawerSubMenuState);
 
   const [funds, setFunds] = useState<Coin[]>([]);
@@ -251,6 +255,7 @@ function InstantiateDialog(props: IInstantiateDialogProps) {
         funds,
         instancelabel
       );
+
       navigate(`/instances/${contract.address}`);
       onClose();
       setDrawerSubMenu(undefined);
@@ -290,6 +295,11 @@ function InstantiateDialog(props: IInstantiateDialogProps) {
         >
           <DialogContentText>InstantiateMsg</DialogContentText>
           <Grid item>
+            <SchemaForm
+              schema={instantiateSchema}
+              submit={setPayload}
+              iconColor={theme.palette.common.black}
+            />
             <BeautifyJSON
               onChange={setPayload}
               disabled={!payload.length || !isJsonValid}
